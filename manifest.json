@@ -1,0 +1,18 @@
+{
+  "manifest_version": 2,
+  "name": "Simple Chronodex Tab",
+  "version": "0.1",
+  "description": "Daily planning tool",
+  "author": "Harold Finch",
+  "chrome_url_overrides" : {
+    "newtab": "index.html"
+  },
+  "permissions": [
+    "storage",
+    "https://api.hasanhasanov.com/"
+  ],
+  "icons": {
+    "16": "icon16.png",
+    "128": "icon128.png"
+  }
+}

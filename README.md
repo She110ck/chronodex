@@ -1,5 +1,5 @@
 
-Chronodex
+# Chronodex
 
 *A minimalist, customisable Chronodex planner for your New Tab page*
 

@@ -8,8 +8,7 @@
     "newtab": "index.html"
   },
   "permissions": [
-    "storage",
-    "https://api.hasanhasanov.com/"
+    "storage"
   ],
   "icons": {
     "16": "icon16.png",

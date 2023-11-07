@@ -35,18 +35,44 @@ body {
   left: 50px;
 }
   
-input {
+.picker-input {
   padding: 0;
   border: none;
   background: none;
   /* outline: none; */
 }
 
-input:hover {
+input[type="color"] {
+/* margin: 2px; */
+margin-bottom: 4px;
+border: none;
+height: 46px;
+width: 46px;
+vertical-align: middle;
+display: inline-block;
+border-radius: 4px;
+}
+
+.title-input {
+  margin: 2px;
+  border-radius: 2px;
+  border-style: solid;
+  width: 75%;
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 4px;
+  border-color: #f0f0f0;
+
+}
+.title-input:hover {
+  border-color: #2b3c4d;
+}
+
+.picker-input:hover {
   cursor: pointer;
 }
 
-input:focus {
+.picker-input:focus {
   cursor: pointer;
 }
 
@@ -55,12 +81,14 @@ button {
   background-color: #008CBA;
   border: none;
   color: white;
-  padding: 15px 32px;
+  padding: 10px 20px;
+  margin: 2px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
   font-size: 16px;
   cursor: pointer;
+  border-radius: 4px;
 }
 
 
@@ -100,7 +128,6 @@ button {
   float: right;
   font-size: 28px;
   font-weight: bold;
-  padding-top: 8px;
 }
 
 .close:hover,

@@ -67,8 +67,8 @@ let initClock = function () {
     })
 
     let txt = new Konva.Text({
-      x: conf.with / 2,
-      y: conf.height / 2,
+      x: conf.with / 2-2,
+      y: conf.height / 2-4,
       fill: conf.black,
       text: (i + 12) % 24 || '0',
       fontSize: 20,
@@ -305,7 +305,7 @@ class TimeGap {
         this.outerBorder.angle(this.getAngle() - this.arc.rotation())
         this.dragPoint.rotation(this.getAngle())
         this.sideBorder.rotation(this.getAngle())
-        this._hour = this.arc.angle() / conf.hourAngle
+        this.hour(this.arc.angle() / conf.hourAngle)
 
         layer.batchDraw()
       })
@@ -370,8 +370,9 @@ class TimeGap {
 
   hour (arg) {
     if (arg === undefined) return this._hour
-
-    this.arc.angle(arg * conf.hourAngle)
+    let positiveAngle = (arg * conf.hourAngle +720) % 360
+    this.arc.angle(positiveAngle)
+    this._hour = positiveAngle/conf.hourAngle
     layer.batchDraw()
   }
 

@@ -110,7 +110,7 @@ let printSegments = function () {
 
     const remBtn = document.createElement('button')
     remBtn.setAttribute('class', 'remove-button')
-    remBtn.textContent = 'X'
+    remBtn.textContent = 'Remove'
     remBtn.onclick = function () {
       curr.remove()
       segments.splice(index, 1)

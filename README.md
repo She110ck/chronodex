@@ -3,7 +3,7 @@
 
 *A minimalist, customisable Chronodex planner for your New Tab page*
 
-![screenshot](https://raw.githubusercontent.com/She110ck/chronodex/main/screenshot.png)
+![screenshot](https://raw.githubusercontent.com/She110ck/chronodex/main/chronodex-1200.png)
 
 ## Intro
 If you also wanted to visualize your whole day in one place, this extension is for you. 
@@ -20,8 +20,13 @@ git clone https://github.com/She110ck/chronodex.git
 ```
 Chrome -> Manage extensions -> Developer mode -> Load unpacked
 ```
+## Publishing
+```
+zip -r chronodex.zip css icons manifest.json LICENSE scripts index.html
+```
+
 ## Future improvements
-[ ] Change ugly settings panel design.  
+[x] Change ugly settings panel design.  
 [ ] Update state management. I don't like segment and list of title interraction.  
 [ ] Dark mode.   
 [ ] 12 hour clock numbers(I prefer 24 hour, but good to have a choice), non rotated clock numbers.  

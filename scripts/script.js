@@ -219,13 +219,25 @@ initClock()
  */
 
 var segments = []
-var points = []
+
+const positiveAngle = function (angle) {
+  return ((angle % 360) + 360) % 360
+}
+
+const shapeAttrs = function (shape) {
+  if (!shape) return {}
+
+  return shape.attrs || shape
+}
+
 class TimeGap {
   constructor (values = {}) {
+    const legacyArc = shapeAttrs(values.arc)
     this._title = values.title === undefined ? 'Time segment ' + (segments.length + 1) : values.title
-    // initialize before arc
     this._color = values.color || getRandomColor()
     this._hour = ((values.hour === undefined ? 1 : values.hour) + 24) % 24
+    this._rotation = positiveAngle(values.rotation === undefined ? legacyArc.rotation || 0 : values.rotation)
+    this._outerRadius = values.outerRadius || legacyArc.outerRadius || conf.radius
 
     // ---------------------------------------------------
     // should be centered every time
@@ -234,19 +246,14 @@ class TimeGap {
       y: conf.height / 2
     }
 
-    const restoreShapeAttrs = function (shape) {
-      if (!shape) return undefined
-
-      return Object.assign({}, shape.attrs || shape, position)
-    }
-
     // default values
     const defaultArch = {
       x: position.x,
       y: position.y,
       innerRadius: conf.innerRadius,
-      outerRadius: conf.radius,
+      outerRadius: this._outerRadius,
       angle: this._hour * conf.hourAngle,
+      rotation: this._rotation,
       fill: this._color,
       opacity: conf.opacity
     }
@@ -255,7 +262,7 @@ class TimeGap {
       stroke: conf.black,
       strokeWidth: conf.strokeWidth,
       fillEnabled: false,
-      innerRadius: conf.radius
+      innerRadius: this._outerRadius
     })
 
     const defaultSideBorder = Object.assign({}, defaultArch, {
@@ -263,7 +270,7 @@ class TimeGap {
       strokeWidth: conf.strokeWidth,
       fillEnabled: false,
       angle: 0,
-      rotation: this._hour * conf.hourAngle
+      rotation: this.endRotation()
     })
     const defaultDragPoint = {
       x: position.x,
@@ -274,20 +281,66 @@ class TimeGap {
       fillEnabled: true,
       fill: conf.white,
       opacity: 1,
-      rotation: this._hour * conf.hourAngle,
+      rotation: this.endRotation(),
       offset: {
-        x: -conf.radius,
+        x: -this._outerRadius,
         y: 0
       }
     }
     // ---------------------------------------------------
-    this.arc = new Konva.Arc(restoreShapeAttrs(values.arc) || defaultArch)
+    this.arc = new Konva.Arc(defaultArch)
 
-    this.outerBorder = new Konva.Arc(restoreShapeAttrs(values.outerBorder) || defaultOuterBorder)
+    this.outerBorder = new Konva.Arc(defaultOuterBorder)
 
-    this.sideBorder = new Konva.Arc(restoreShapeAttrs(values.sideBorder) || defaultSideBorder)
+    this.sideBorder = new Konva.Arc(defaultSideBorder)
 
-    this.dragPoint = new Konva.Circle(restoreShapeAttrs(values.dragPoint) || defaultDragPoint)
+    this.dragPoint = new Konva.Circle(defaultDragPoint)
+  }
+
+  endRotation () {
+    return positiveAngle(this._rotation + this._hour * conf.hourAngle)
+  }
+
+  startHour () {
+    return (this._rotation / conf.hourAngle + 12) % 24
+  }
+
+  endHour () {
+    return (this.startHour() + this._hour) % 24
+  }
+
+  syncGeometry () {
+    const position = {
+      x: conf.with / 2,
+      y: conf.height / 2
+    }
+    const segmentAngle = this._hour * conf.hourAngle
+    const endRotation = this.endRotation()
+
+    this.arc.setAttrs(Object.assign({}, position, {
+      outerRadius: this._outerRadius,
+      angle: segmentAngle,
+      rotation: this._rotation,
+      fill: this._color
+    }))
+    this.outerBorder.setAttrs(Object.assign({}, position, {
+      outerRadius: this._outerRadius,
+      innerRadius: this._outerRadius,
+      angle: segmentAngle,
+      rotation: this._rotation
+    }))
+    this.sideBorder.setAttrs(Object.assign({}, position, {
+      outerRadius: this._outerRadius,
+      angle: 0,
+      rotation: endRotation
+    }))
+    this.dragPoint.setAttrs(Object.assign({}, position, {
+      rotation: endRotation,
+      offset: {
+        x: -this._outerRadius,
+        y: 0
+      }
+    }))
   }
 
   distance (p1, p2) {
@@ -331,13 +384,7 @@ class TimeGap {
         const pointer = stage.getPointerPosition()
         const radius = this.distance(center, pointer)
 
-        this.outerBorder.outerRadius(radius)
-        this.outerBorder.innerRadius(radius)
-        this.arc.outerRadius(radius)
-        this.sideBorder.outerRadius(radius)
-        this.dragPoint.offset({ x: -radius, y: 0 })
-
-        layer.batchDraw()
+        this.outerRadius(radius)
       })
 
       // remove all events at end
@@ -363,13 +410,7 @@ class TimeGap {
       // attach move event
 
       stage.on('mousemove.resizer', () => {
-        this.arc.angle(this.getAngle() - this.arc.rotation())
-        this.outerBorder.angle(this.getAngle() - this.arc.rotation())
-        this.dragPoint.rotation(this.getAngle())
-        this.sideBorder.rotation(this.getAngle())
-        this.hour(this.arc.angle() / conf.hourAngle)
-
-        layer.batchDraw()
+        this.hour((this.getAngle() - this.rotation()) / conf.hourAngle)
       })
 
       // remove all events at end
@@ -395,12 +436,7 @@ class TimeGap {
       // attach move event
       // let prev =
       stage.on('mousemove.resizer', () => {
-        this.arc.rotation(this.getAngle() - this.arc.angle())
-        this.outerBorder.rotation(this.getAngle() - this.arc.angle())
-        this.dragPoint.rotation(this.getAngle())
-        this.sideBorder.rotation(this.getAngle())
-
-        layer.batchDraw()
+        this.rotation(this.getAngle() - this.arc.angle())
       })
 
       // remove all events at end
@@ -433,8 +469,15 @@ class TimeGap {
   hour (arg) {
     if (arg === undefined) return this._hour
     let positiveAngle = (arg * conf.hourAngle +720) % 360
-    this.arc.angle(positiveAngle)
     this._hour = positiveAngle/conf.hourAngle
+    this.syncGeometry()
+    layer.batchDraw()
+  }
+
+  rotation (arg) {
+    if (arg === undefined) return this._rotation
+    this._rotation = positiveAngle(arg)
+    this.syncGeometry()
     layer.batchDraw()
   }
 
@@ -442,7 +485,14 @@ class TimeGap {
     if (arg === undefined) return this._color
 
     this._color = arg
-    this.arc.fill(arg)
+    this.syncGeometry()
+    layer.batchDraw()
+  }
+
+  outerRadius (arg) {
+    if (arg === undefined) return this._outerRadius
+    this._outerRadius = arg
+    this.syncGeometry()
     layer.batchDraw()
   }
 
@@ -459,10 +509,8 @@ class TimeGap {
       title: this._title,
       color: this._color,
       hour: this._hour,
-      arc: this.arc.toObject(),
-      outerBorder: this.outerBorder.toObject(),
-      sideBorder: this.sideBorder.toObject(),
-      dragPoint: this.dragPoint.toObject()
+      rotation: this._rotation,
+      outerRadius: this._outerRadius
     }
   }
 }
@@ -489,7 +537,7 @@ chrome.storage.local.get(['segments'], function (items) {
 
 layer.draw()
 
-let saveState = function (dontRedraw=false) {
+function saveState (dontRedraw=false) {
   const segmentsData = segments.map(x => x.serialize())
   // hacky, need to rethink
   if (!dontRedraw) {
@@ -500,6 +548,7 @@ let saveState = function (dontRedraw=false) {
     console.log('SAVED')
   })
 }
+
 // saveState()
 
 let resizeTimer
@@ -508,11 +557,13 @@ window.addEventListener('resize', function () {
   resizeTimer = setTimeout(function () {
     const segmentsData = segments.map(x => x.serialize())
 
-    points.forEach(function (curr) {
-      curr.point.remove()
-      curr.title.remove()
-    })
-    points = []
+    if (typeof points !== 'undefined') {
+      points.forEach(function (curr) {
+        curr.point.remove()
+        curr.title.remove()
+      })
+      points = []
+    }
 
     segments.forEach(function (segment) {
       segment.remove()
@@ -545,10 +596,18 @@ window.addEventListener('resize', function () {
 })
 
 const exportChronodexDataUrl = function () {
-  return stage.toDataURL({
+  segments.forEach(segment => segment.dragPoint.visible(false))
+  layer.draw()
+
+  const dataUrl = stage.toDataURL({
     pixelRatio: 2,
     mimeType: 'image/png'
   })
+
+  segments.forEach(segment => segment.dragPoint.visible(true))
+  layer.draw()
+
+  return dataUrl
 }
 
 const downloadChronodex = function () {

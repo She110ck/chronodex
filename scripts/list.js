@@ -36,15 +36,11 @@ window.onclick = function (event) {
   }
 }
 
-// ---------------------------------------------------
-// Title list
-// ---------------------------------------------------
-
-var points = []
-
 let formatHours = function (hours) {
   return hours + ' h'
 }
+
+var points = []
 
 let createTitle = function (text, color, hours, index) {
   const defaultTitlePoint = {
@@ -75,7 +71,7 @@ let createTitle = function (text, color, hours, index) {
 
 let printSegments = function () {
   modalBody.innerHTML = ''
-  points.forEach(function (curr, index) {
+  points.forEach(function (curr) {
     curr.point.remove()
     curr.title.remove()
   })
@@ -92,6 +88,7 @@ let printSegments = function () {
   segments.forEach(function (curr, index, arr) {
     let pointObj = createTitle(curr.title(), curr.color(), curr.hour(), index)
     points.push(pointObj)
+
     const lstItem = document.createElement('div')
     lstItem.setAttribute('class', 'segment-row')
 

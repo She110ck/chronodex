@@ -16,13 +16,23 @@
     <button id="openNavigation" class="settings-fab" aria-label="Open planner settings" title="Settings">
       &#9881;
     </button>
-    <button id="downloadChronodex" class="download-fab" aria-label="Download Chronodex" title="Download Chronodex">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 3v11"></path>
-        <path d="m7 10 5 5 5-5"></path>
-        <path d="M5 19h14"></path>
-      </svg>
-    </button>
+    <div class="quick-controls" aria-label="Planner controls">
+      <button id="downloadChronodex" class="download-fab" aria-label="Download Chronodex" title="Download Chronodex">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3v11"></path>
+          <path d="m7 10 5 5 5-5"></path>
+          <path d="M5 19h14"></path>
+        </svg>
+      </button>
+      <button id="clockModeToggle" class="switch-toggle clock-switch" type="button" aria-label="Switch clock labels">
+        <span>24</span>
+        <span>12</span>
+      </button>
+      <button id="themeToggle" class="switch-toggle theme-switch" type="button" aria-label="Switch color theme">
+        <span>Light</span>
+        <span>Dark</span>
+      </button>
+    </div>
 
     <div id="myModal" class="modal">
       <div class="modal-content">

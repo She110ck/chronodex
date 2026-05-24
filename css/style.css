@@ -1,10 +1,25 @@
 html, body {
+  --accent: #2b3c4d;
+  --accent-hover: #35495e;
+  --accent-shadow: rgba(43, 60, 77, 0.22);
+  --accent-border: rgba(43, 60, 77, 0.28);
+
   margin: 0;
   padding: 0;
   overflow: hidden;
   height: 100%;
   background: #eef0ed;
   color: #243241;
+}
+
+html[data-theme="dark"] body {
+  --accent: #3f5368;
+  --accent-hover: #4c6278;
+  --accent-shadow: rgba(0, 0, 0, 0.28);
+  --accent-border: rgba(232, 238, 233, 0.16);
+
+  background: #111820;
+  color: #e8eee9;
 }
 
 body {
@@ -32,11 +47,14 @@ body {
   transform: translateY(-50%);
 }
 
-#downloadChronodex {
+.quick-controls {
   position: fixed;
   right: 28px;
   top: 28px;
   z-index: 2;
+  display: grid;
+  justify-items: end;
+  gap: 10px;
 }
 
 .settings-fab,
@@ -58,13 +76,21 @@ body {
   width: 46px;
   height: 64px;
   border-left: 0;
-  border-radius: 0 16px 16px 0;
+  border-radius: 0 4px 4px 0;
+  border-color: rgba(43, 60, 77, 0.16);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 8px 14px 34px rgba(26, 35, 45, 0.13);
+  color: #243241;
 }
 
 .download-fab {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: 4px;
+  border-color: rgba(43, 60, 77, 0.16);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 8px 14px 34px rgba(26, 35, 45, 0.13);
+  color: #243241;
 }
 
 .download-fab svg {
@@ -89,7 +115,70 @@ body {
 .download-fab:hover,
 .download-fab:focus {
   width: 48px;
+  background: #ffffff;
+  box-shadow: 10px 18px 42px rgba(26, 35, 45, 0.18);
   transform: translateY(-2px);
+}
+
+.switch-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  width: 108px;
+  height: 34px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid rgba(43, 60, 77, 0.16);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 8px 14px 34px rgba(26, 35, 45, 0.1);
+  color: #66776d;
+  cursor: pointer;
+}
+
+.clock-switch {
+  width: 76px;
+}
+
+.switch-toggle::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: calc(50% - 4px);
+  height: calc(100% - 6px);
+  border-radius: 3px;
+  background: var(--accent);
+  box-shadow: 0 5px 14px var(--accent-shadow);
+  transition: transform 170ms ease, background 170ms ease;
+}
+
+.switch-toggle.is-right::before {
+  transform: translateX(calc(100% + 2px));
+}
+
+.switch-toggle span {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: 100%;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.switch-toggle span:first-child {
+  color: #ffffff;
+}
+
+.switch-toggle.is-right span:first-child {
+  color: #66776d;
+}
+
+.switch-toggle.is-right span:last-child {
+  color: #ffffff;
 }
 
 .picker-input {
@@ -129,7 +218,7 @@ body {
   background: #ffffff;
 }
 
-button:not(.settings-fab):not(.download-fab) {
+button:not(.settings-fab):not(.download-fab):not(.switch-toggle):not(.add-button):not(.remove-button) {
   background: #2b3c4d;
   border: none;
   color: white;
@@ -167,6 +256,7 @@ button:not(.settings-fab):not(.download-fab) {
   overflow: hidden;
   background: #ffffff;
   border-right: 1px solid rgba(43, 60, 77, 0.12);
+  border-top: 4px solid var(--accent);
   border-radius: 0 4px 4px 0;
   box-shadow: 22px 0 72px rgba(25, 34, 43, 0.22);
   -webkit-animation-name: slideInLeft;
@@ -206,18 +296,27 @@ button:not(.settings-fab):not(.download-fab) {
   place-items: center;
   height: 34px;
   padding: 0 14px;
-  background: #246b52;
+  border: 0;
+  border-radius: 4px;
+  background: var(--accent);
+  box-shadow: 0 6px 16px var(--accent-shadow);
+  color: #ffffff;
   font-size: 15px;
   font-weight: 700;
   line-height: 1;
 }
 
+.add-button:hover,
+.add-button:focus {
+  background: var(--accent-hover);
+}
+
 .modal-body {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   max-height: calc(100vh - 100px);
   overflow: auto;
-  padding: 14px 14px 28px;
+  padding: 12px 14px 24px;
 }
 
 .segment-row {
@@ -225,24 +324,35 @@ button:not(.settings-fab):not(.download-fab) {
   grid-template-columns: 38px minmax(0, 1fr) 36px;
   align-items: start;
   column-gap: 10px;
-  row-gap: 4px;
-  min-height: 76px;
-  padding: 10px;
+  row-gap: 2px;
+  min-height: 64px;
+  padding: 8px 10px;
   border: 1px solid #e5ece7;
   border-radius: 4px;
   background: #fbfcfb;
+  cursor: grab;
 }
 
 .segment-row:hover {
-  border-color: #cfdcd4;
+  border-color: rgba(43, 60, 77, 0.36);
   background: #ffffff;
+}
+
+.segment-row.is-dragging {
+  cursor: grabbing;
+  opacity: 0.54;
+}
+
+.segment-row.is-drop-target {
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent);
 }
 
 .segment-row .picker-input {
   grid-column: 1 / 2;
   grid-row: 1 / 2;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   box-shadow: inset 0 0 0 1px rgba(36, 50, 65, 0.14);
 }
 
@@ -254,7 +364,7 @@ button:not(.settings-fab):not(.download-fab) {
 }
 
 .segment-row .title-input {
-  height: 36px;
+  height: 34px;
   padding: 0 10px;
   border-color: #d8e2dc;
   background: #ffffff;
@@ -272,7 +382,7 @@ button:not(.settings-fab):not(.download-fab) {
   grid-row: 2 / 3;
   min-width: 62px;
   color: #66776d;
-  font-size: 13px;
+  font-size: 12px;
   text-align: left;
   white-space: nowrap;
 }
@@ -282,9 +392,11 @@ button:not(.settings-fab):not(.download-fab) {
   display: block;
   grid-column: 3 / 4;
   grid-row: 1 / 2;
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   padding: 0;
+  border: 0;
+  border-radius: 4px;
   overflow: hidden;
   background: #f7ece9;
   color: #8b2f22;
@@ -317,13 +429,118 @@ button:not(.settings-fab):not(.download-fab) {
   font-size: 15px;
 }
 
+html[data-theme="dark"] .settings-fab,
+html[data-theme="dark"] .switch-toggle {
+  border-color: rgba(232, 238, 233, 0.14);
+  background: rgba(26, 36, 46, 0.86);
+  box-shadow: 8px 14px 34px rgba(0, 0, 0, 0.24);
+  color: #e8eee9;
+}
+
+html[data-theme="dark"] .settings-fab:hover,
+html[data-theme="dark"] .settings-fab:focus {
+  background: #202b36;
+}
+
+html[data-theme="dark"] .settings-fab {
+  border-color: rgba(232, 238, 233, 0.14);
+  background: rgba(26, 36, 46, 0.86);
+  box-shadow: 8px 14px 34px rgba(0, 0, 0, 0.24);
+  color: #e8eee9;
+}
+
+html[data-theme="dark"] .download-fab {
+  border-color: rgba(232, 238, 233, 0.14);
+  background: rgba(26, 36, 46, 0.86);
+  box-shadow: 8px 14px 34px rgba(0, 0, 0, 0.24);
+  color: #e8eee9;
+}
+
+html[data-theme="dark"] .download-fab:hover,
+html[data-theme="dark"] .download-fab:focus {
+  background: #202b36;
+  box-shadow: 10px 18px 42px rgba(0, 0, 0, 0.3);
+}
+
+html[data-theme="dark"] .add-button {
+  background: var(--accent);
+  box-shadow: 0 6px 16px var(--accent-shadow);
+}
+
+html[data-theme="dark"] .add-button:hover,
+html[data-theme="dark"] .add-button:focus {
+  background: var(--accent-hover);
+}
+
+html[data-theme="dark"] .modal-content {
+  background: #19232d;
+  border-right-color: rgba(232, 238, 233, 0.12);
+  border-top-color: var(--accent);
+}
+
+html[data-theme="dark"] .modal-header {
+  border-bottom-color: #293846;
+  background: #202b36;
+  color: #e8eee9;
+}
+
+html[data-theme="dark"] .modal-title {
+  color: #e8eee9;
+}
+
+html[data-theme="dark"] .switch-toggle,
+html[data-theme="dark"] .switch-toggle.is-right span:first-child {
+  color: #a9b8ad;
+}
+
+html[data-theme="dark"] .switch-toggle::before {
+  background: var(--accent);
+  box-shadow: 0 5px 14px var(--accent-shadow);
+}
+
+html[data-theme="dark"] .segment-row {
+  border-color: #293846;
+  background: #17212a;
+}
+
+html[data-theme="dark"] .segment-row:hover {
+  border-color: rgba(232, 238, 233, 0.22);
+  background: #1d2934;
+}
+
+html[data-theme="dark"] .segment-row.is-drop-target {
+  border-color: var(--accent);
+  box-shadow: inset 4px 0 0 var(--accent);
+}
+
+html[data-theme="dark"] .segment-row .title-input {
+  border-color: #344554;
+  background: #111820;
+  color: #e8eee9;
+}
+
+html[data-theme="dark"] .segment-duration,
+html[data-theme="dark"] .empty-state {
+  color: #a9b8ad;
+}
+
+html[data-theme="dark"] .remove-button {
+  background: #402720;
+  color: #f0c2b9;
+}
+
+html[data-theme="dark"] .remove-button:hover,
+html[data-theme="dark"] .remove-button:focus {
+  background: #563226;
+}
+
 @media (max-width: 640px) {
   #openNavigation {
     left: 0;
     top: 50%;
   }
 
-  #downloadChronodex {
+  .quick-controls {
     right: 18px;
     top: 18px;
   }

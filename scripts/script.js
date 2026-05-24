@@ -30,6 +30,33 @@ const conf = {
   titleTextFontFamily: 'Arial'
 }
 
+const themes = {
+  light: {
+    canvas: '#f2f2f2',
+    ink: '#2b3c4d',
+    amBackground: '#1f2f3f',
+    pmBackground: '#e5ebe6'
+  },
+  dark: {
+    canvas: '#151b22',
+    ink: '#e8eee9',
+    amBackground: '#05080c',
+    pmBackground: '#293442'
+  }
+}
+
+var settings = {
+  theme: 'light',
+  clockLabels: '24'
+}
+
+const normalizeSettings = function (values) {
+  return {
+    theme: values && values.theme === 'dark' ? 'dark' : 'light',
+    clockLabels: values && values.clockLabels === '12' ? '12' : '24'
+  }
+}
+
 const degToRad = function (degrees) {
   return degrees * Math.PI / 180
 }
@@ -72,6 +99,14 @@ stage.add(layer)
 const getRandomColor = function () {
   return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
 }
+
+const clockLabel = function (hour) {
+  if (settings.clockLabels === '12') {
+    return String((hour % 12) || 12)
+  }
+
+  return String(hour || '0')
+}
 // ---------------------------------------------------
 var clockNodes = []
 var clockInterval
@@ -89,6 +124,32 @@ const clearClock = function () {
 
   clockNodes.forEach(node => node.remove())
   clockNodes = []
+}
+
+const syncTheme = function () {
+  const theme = themes[settings.theme] || themes.light
+
+  conf.white = theme.canvas
+  conf.black = theme.ink
+  conf.deselectColor = theme.ink
+  conf.amBackground = theme.amBackground
+  conf.pmBackground = theme.pmBackground
+
+  document.documentElement.dataset.theme = settings.theme
+  background.fill(conf.white)
+}
+
+const redrawScene = function () {
+  syncTheme()
+  initClock()
+  segments.forEach(function (segment) {
+    segment.syncGeometry()
+  })
+  layer.batchDraw()
+
+  if (typeof printSegments === 'function') {
+    printSegments()
+  }
 }
 
 let initClock = function () {
@@ -123,6 +184,9 @@ let initClock = function () {
 
   addClockNode(pmBand)
   addClockNode(amBand)
+  background.zIndex(0)
+  pmBand.zIndex(1)
+  amBand.zIndex(2)
 
   for (let i = 0; i < 24; i++) {
     const hour = (i + 12) % 24
@@ -143,7 +207,7 @@ let initClock = function () {
       x: textPosition.x,
       y: textPosition.y,
       fill: conf.black,
-      text: hour || '0',
+      text: clockLabel(hour),
       fontSize: 20,
       fontFamily: 'Monospace',
       offset: {
@@ -219,6 +283,32 @@ initClock()
  */
 
 var segments = []
+
+const serializeSegments = function () {
+  return segments.map(segment => segment.serialize())
+}
+
+const clearSegments = function () {
+  segments.forEach(function (segment) {
+    segment.remove()
+  })
+  segments = []
+}
+
+const loadSegments = function (segmentsData) {
+  clearSegments()
+
+  segmentsData.forEach(function (data) {
+    const tg = new TimeGap(data)
+    tg.init(saveState)
+    tg.addToLayer(layer)
+    segments.push(tg)
+  })
+
+  segments.forEach(function (segment) {
+    segment.addDragPoint(layer)
+  })
+}
 
 const positiveAngle = function (angle) {
   return ((angle % 360) + 360) % 360
@@ -327,15 +417,19 @@ class TimeGap {
       outerRadius: this._outerRadius,
       innerRadius: this._outerRadius,
       angle: segmentAngle,
-      rotation: this._rotation
+      rotation: this._rotation,
+      stroke: conf.black
     }))
     this.sideBorder.setAttrs(Object.assign({}, position, {
       outerRadius: this._outerRadius,
       angle: 0,
-      rotation: endRotation
+      rotation: endRotation,
+      stroke: conf.black
     }))
     this.dragPoint.setAttrs(Object.assign({}, position, {
       rotation: endRotation,
+      stroke: conf.black,
+      fill: conf.white,
       offset: {
         x: -this._outerRadius,
         y: 0
@@ -516,19 +610,13 @@ class TimeGap {
 }
 // ---------------------------------------------------
 
-chrome.storage.local.get(['segments'], function (items) {
-  const storedSegments = Array.isArray(items.segments) ? items.segments : []
+chrome.storage.local.get(['segments', 'settings'], function (items) {
+  settings = normalizeSettings(items.settings)
+  syncTheme()
+  initClock()
 
-  storedSegments.forEach(element => {
-    var tg = new TimeGap(element)
-    tg.init(saveState)
-    tg.addToLayer(layer)
-    segments.push(tg)
-  })
-  // just because I want drag points over everything
-  segments.forEach(element => {
-    element.addDragPoint(layer)
-  })
+  const storedSegments = Array.isArray(items.segments) ? items.segments : []
+  loadSegments(storedSegments)
 
   if (typeof printSegments === 'function') {
     printSegments()
@@ -538,7 +626,7 @@ chrome.storage.local.get(['segments'], function (items) {
 layer.draw()
 
 function saveState (dontRedraw=false) {
-  const segmentsData = segments.map(x => x.serialize())
+  const segmentsData = serializeSegments()
   // hacky, need to rethink
   if (!dontRedraw) {
     printSegments()
@@ -549,13 +637,25 @@ function saveState (dontRedraw=false) {
   })
 }
 
+function saveSettings () {
+  chrome.storage.local.set({ settings: settings }, function () {
+    console.log('SETTINGS SAVED')
+  })
+}
+
+function updateSettings (values) {
+  settings = normalizeSettings(Object.assign({}, settings, values))
+  redrawScene()
+  saveSettings()
+}
+
 // saveState()
 
 let resizeTimer
 window.addEventListener('resize', function () {
   clearTimeout(resizeTimer)
   resizeTimer = setTimeout(function () {
-    const segmentsData = segments.map(x => x.serialize())
+    const segmentsData = serializeSegments()
 
     if (typeof points !== 'undefined') {
       points.forEach(function (curr) {
@@ -565,10 +665,7 @@ window.addEventListener('resize', function () {
       points = []
     }
 
-    segments.forEach(function (segment) {
-      segment.remove()
-    })
-    segments = []
+    clearSegments()
 
     conf.with = window.innerWidth
     conf.height = window.innerHeight
@@ -579,15 +676,7 @@ window.addEventListener('resize', function () {
 
     initClock()
 
-    segmentsData.forEach(function (data) {
-      const tg = new TimeGap(data)
-      tg.init(saveState)
-      tg.addToLayer(layer)
-      segments.push(tg)
-    })
-    segments.forEach(function (segment) {
-      segment.addDragPoint(layer)
-    })
+    loadSegments(segmentsData)
 
     printSegments()
     saveState(true)

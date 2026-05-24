@@ -9,6 +9,8 @@ var modalBody = document.getElementById('modalBody')
 var btn = document.getElementById('openNavigation')
 var downloadBtn = document.getElementById('downloadChronodex')
 var addBtn = document.getElementById('add')
+var clockModeToggleBtn = document.getElementById('clockModeToggle')
+var themeToggleBtn = document.getElementById('themeToggle')
 
 // When the user clicks the button, open the modal
 btn.onclick = function () {
@@ -29,6 +31,14 @@ downloadBtn.onclick = function () {
   downloadChronodex()
 }
 
+clockModeToggleBtn.onclick = function () {
+  updateSettings({ clockLabels: settings.clockLabels === '24' ? '12' : '24' })
+}
+
+themeToggleBtn.onclick = function () {
+  updateSettings({ theme: settings.theme === 'dark' ? 'light' : 'dark' })
+}
+
 // When the user clicks anywhere outside of the modal, close it
 window.onclick = function (event) {
   if (event.target == modal) {
@@ -41,6 +51,14 @@ let formatHours = function (hours) {
 }
 
 var points = []
+var draggedSegmentIndex = null
+
+let syncControls = function () {
+  clockModeToggleBtn.classList.toggle('is-right', settings.clockLabels === '12')
+  clockModeToggleBtn.setAttribute('aria-pressed', String(settings.clockLabels === '12'))
+  themeToggleBtn.classList.toggle('is-right', settings.theme === 'dark')
+  themeToggleBtn.setAttribute('aria-pressed', String(settings.theme === 'dark'))
+}
 
 let createTitle = function (text, color, hours, index) {
   const defaultTitlePoint = {
@@ -69,7 +87,19 @@ let createTitle = function (text, color, hours, index) {
   return { title: simpleText, point: titlePoint }
 }
 
+let moveSegment = function (fromIndex, toIndex) {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) {
+    return
+  }
+
+  const moved = segments.splice(fromIndex, 1)[0]
+  segments.splice(toIndex, 0, moved)
+  draggedSegmentIndex = null
+  saveState()
+}
+
 let printSegments = function () {
+  syncControls()
   modalBody.innerHTML = ''
   points.forEach(function (curr) {
     curr.point.remove()
@@ -91,6 +121,33 @@ let printSegments = function () {
 
     const lstItem = document.createElement('div')
     lstItem.setAttribute('class', 'segment-row')
+    lstItem.setAttribute('draggable', 'true')
+    lstItem.setAttribute('aria-label', 'Drag to reorder segment')
+    lstItem.addEventListener('dragstart', function (event) {
+      draggedSegmentIndex = index
+      lstItem.classList.add('is-dragging')
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setData('text/plain', String(index))
+    })
+    lstItem.addEventListener('dragover', function (event) {
+      event.preventDefault()
+      if (draggedSegmentIndex !== index) {
+        lstItem.classList.add('is-drop-target')
+      }
+    })
+    lstItem.addEventListener('dragleave', function () {
+      lstItem.classList.remove('is-drop-target')
+    })
+    lstItem.addEventListener('drop', function (event) {
+      event.preventDefault()
+      lstItem.classList.remove('is-drop-target')
+      moveSegment(draggedSegmentIndex, index)
+    })
+    lstItem.addEventListener('dragend', function () {
+      draggedSegmentIndex = null
+      lstItem.classList.remove('is-dragging')
+      lstItem.classList.remove('is-drop-target')
+    })
 
     const colorPicker = document.createElement('input')
     colorPicker.setAttribute('type', 'color')

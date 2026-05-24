@@ -13,20 +13,26 @@
       <p>Canvas error!</p>
     </div>
 
-    <span style="font-size:30px;cursor:pointer" id="openNavigation">&#9881;</span>
+    <button id="openNavigation" class="settings-fab" aria-label="Open planner settings" title="Settings">
+      &#9881;
+    </button>
+    <button id="downloadChronodex" class="download-fab" aria-label="Download Chronodex" title="Download Chronodex">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3v11"></path>
+        <path d="m7 10 5 5 5-5"></path>
+        <path d="M5 19h14"></path>
+      </svg>
+    </button>
 
-    <!-- The Modal -->
     <div id="myModal" class="modal">
-      <!-- Modal content -->
       <div class="modal-content">
         <div class="modal-header">
-          <span class="close">&times;</span>
-          <button id="add">Add &#43;</button>
+          <h1 class="modal-title">Chronodex</h1>
+          <div class="modal-actions">
+            <button id="add" class="add-button">+ Add</button>
+          </div>
         </div>
         <div class="modal-body" id="modalBody">
-        </div>
-        <div class="modal-footer">
-          <!-- <h3>Modal Footer</h3> -->
         </div>
       </div>
     </div>

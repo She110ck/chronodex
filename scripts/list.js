@@ -7,9 +7,8 @@ var modal = document.getElementById('myModal')
 var modalBody = document.getElementById('modalBody')
 // Get the button that opens the modal
 var btn = document.getElementById('openNavigation')
+var downloadBtn = document.getElementById('downloadChronodex')
 var addBtn = document.getElementById('add')
-// Get the <span> element that closes the modal
-var span = document.getElementsByClassName('close')[0]
 
 // When the user clicks the button, open the modal
 btn.onclick = function () {
@@ -26,9 +25,8 @@ addBtn.onclick = function () {
   printSegments()
 }
 
-// When the user clicks on <span> (x), close the modal
-span.onclick = function () {
-  modal.style.display = 'none'
+downloadBtn.onclick = function () {
+  downloadChronodex()
 }
 
 // When the user clicks anywhere outside of the modal, close it
@@ -44,6 +42,10 @@ window.onclick = function (event) {
 
 var points = []
 
+let formatHours = function (hours) {
+  return hours + ' h'
+}
+
 let createTitle = function (text, color, hours, index) {
   const defaultTitlePoint = {
     x: conf.titlePointX,
@@ -56,14 +58,14 @@ let createTitle = function (text, color, hours, index) {
   var simpleText = new Konva.Text({
     x: conf.titlePointX + conf.titleTextXDelta,
     y: conf.titlePointStartY + conf.titleTexYDelta + conf.titleStep * index,
-    text: text + (hours <= 9 ? ' ( ' : ' (') + hours + ' h.) ',
+    text: text + (hours <= 9 ? ' ( ' : ' (') + formatHours(hours) + '.) ',
     fontSize: conf.titleTextFontSize,
     fontFamily: conf.titleTextFontFamily,
     fill: conf.black,
     opacity: 0.8
   })
 
-  titlePoint = new Konva.Circle(defaultTitlePoint)
+  const titlePoint = new Konva.Circle(defaultTitlePoint)
 
   layer.add(titlePoint)
   layer.add(simpleText)
@@ -79,10 +81,20 @@ let printSegments = function () {
   })
   points = []
 
+  if (segments.length === 0) {
+    const emptyState = document.createElement('div')
+    emptyState.setAttribute('class', 'empty-state')
+    emptyState.textContent = 'No segments yet'
+    modalBody.appendChild(emptyState)
+    return
+  }
+
   segments.forEach(function (curr, index, arr) {
     let pointObj = createTitle(curr.title(), curr.color(), curr.hour(), index)
     points.push(pointObj)
     const lstItem = document.createElement('div')
+    lstItem.setAttribute('class', 'segment-row')
+
     const colorPicker = document.createElement('input')
     colorPicker.setAttribute('type', 'color')
     colorPicker.setAttribute('id', 'picker-' + index)
@@ -91,26 +103,36 @@ let printSegments = function () {
     colorPicker.addEventListener('input', function (evt) {
       curr.color(this.value)
       pointObj.point.fill(this.value)
-      saveState(dontRedraw=true)
+      saveState(true)
     })
-
     lstItem.appendChild(colorPicker)
+
     const title = document.createElement('input')
     title.setAttribute('type', 'text')
     title.setAttribute('value', curr.title())
     title.setAttribute('class', 'title-input')
+    title.setAttribute('aria-label', 'Segment title')
     title.addEventListener('input', function () {
       curr.title(this.value)
       pointObj.title.text(
-        this.value + (curr.hour() <= 9 ? ' ( ' : ' (') + curr.hour() + ' h.) '
+        this.value + (curr.hour() <= 9 ? ' ( ' : ' (') + formatHours(curr.hour()) + '.) '
       )
-      saveState(dontRedraw=true)
+      saveState(true)
     })
-    lstItem.appendChild(title)
+
+    const titleField = document.createElement('label')
+    titleField.setAttribute('class', 'segment-title-field')
+    titleField.appendChild(title)
+    lstItem.appendChild(titleField)
+
+    const duration = document.createElement('span')
+    duration.setAttribute('class', 'segment-duration')
+    duration.textContent = formatHours(curr.hour())
+    lstItem.appendChild(duration)
 
     const remBtn = document.createElement('button')
     remBtn.setAttribute('class', 'remove-button')
-    remBtn.textContent = 'Remove'
+    remBtn.setAttribute('aria-label', 'Remove segment')
     remBtn.onclick = function () {
       curr.remove()
       segments.splice(index, 1)
@@ -127,4 +149,3 @@ let printSegments = function () {
 }
 
 printSegments()
-

@@ -2,8 +2,10 @@ const conf = {
   with: window.innerWidth,
   height: window.innerHeight,
   white: '#f2f2f2',
-  black: '2b3c4d',
+  black: '#2b3c4d',
   opacity: 0.6,
+  amBackground: '#1f2f3f',
+  pmBackground: '#e5ebe6',
   radiusScale: 3,
   strokeWidth: 4,
   get radius () {
@@ -26,6 +28,23 @@ const conf = {
   },
   titleTextFontSize: 18,
   titleTextFontFamily: 'Arial'
+}
+
+const degToRad = function (degrees) {
+  return degrees * Math.PI / 180
+}
+
+const clockRotationForHour = function (hour) {
+  return ((hour - 12 + 24) % 24) * conf.hourAngle
+}
+
+const clockPoint = function (hour, radius) {
+  const radians = degToRad(clockRotationForHour(hour) - 90)
+
+  return {
+    x: conf.with / 2 + Math.cos(radians) * radius,
+    y: conf.height / 2 + Math.sin(radians) * radius
+  }
 }
 
 // ---------------------------------------------------
@@ -51,39 +70,92 @@ layer.add(background)
 stage.add(layer)
 
 const getRandomColor = function () {
-  return '#' + Math.floor(Math.random() * 16777215).toString(16)
+  return '#' + Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0')
 }
 // ---------------------------------------------------
+var clockNodes = []
+var clockInterval
+
+const addClockNode = function (node) {
+  clockNodes.push(node)
+  layer.add(node)
+  return node
+}
+
+const clearClock = function () {
+  if (clockInterval) {
+    clearInterval(clockInterval)
+  }
+
+  clockNodes.forEach(node => node.remove())
+  clockNodes = []
+}
+
 let initClock = function () {
+  clearClock()
+
+  const clockCenter = {
+    x: conf.with / 2,
+    y: conf.height / 2
+  }
+
+  const amBand = new Konva.Arc({
+    x: clockCenter.x,
+    y: clockCenter.y,
+    innerRadius: conf.innerRadius - 28,
+    outerRadius: conf.radius + 26,
+    angle: 180,
+    rotation: 90,
+    fill: conf.amBackground,
+    opacity: 0.12
+  })
+
+  const pmBand = new Konva.Arc({
+    x: clockCenter.x,
+    y: clockCenter.y,
+    innerRadius: conf.innerRadius - 28,
+    outerRadius: conf.radius + 26,
+    angle: 180,
+    rotation: -90,
+    fill: conf.pmBackground,
+    opacity: 0.66
+  })
+
+  addClockNode(pmBand)
+  addClockNode(amBand)
+
   for (let i = 0; i < 24; i++) {
+    const hour = (i + 12) % 24
+    const rotation = clockRotationForHour(hour)
+    const textPosition = clockPoint(hour, conf.radius)
+
     let dot = new Konva.Arc({
       x: conf.with / 2,
       y: conf.height / 2,
       stroke: conf.black,
       strokeWidth: 6,
-      rotation: i * 15,
+      rotation: rotation,
       innerRadius: conf.innerRadius - 4,
       outerRadius: conf.innerRadius + 4
     })
 
     let txt = new Konva.Text({
-      x: conf.with / 2-2,
-      y: conf.height / 2-4,
+      x: textPosition.x,
+      y: textPosition.y,
       fill: conf.black,
-      text: (i + 12) % 24 || '0',
+      text: hour || '0',
       fontSize: 20,
       fontFamily: 'Monospace',
-      rotation: i * 15,
       offset: {
         x: 10,
-        y: -conf.radius
+        y: 10
       }
     })
 
     if (i % 6 == 0) {
-      layer.add(dot)
+      addClockNode(dot)
     }
-    layer.add(txt)
+    addClockNode(txt)
   }
 
   let mainHand = new Konva.Rect({
@@ -115,21 +187,22 @@ let initClock = function () {
     opacity: 1
   })
 
-  layer.add(mainHand)
-  layer.add(secondHand)
-  layer.add(smallCircle)
+  addClockNode(mainHand)
+  addClockNode(secondHand)
+  addClockNode(smallCircle)
 
   let anim = function (frame) {
     let now = new Date()
     let seconds = now.getSeconds()
-    let hourBase = now.getHours() * 60 + now.getMinutes()
-    mainHand.rotation(hourBase / 4)
+    let hourBase = now.getHours() + now.getMinutes() / 60
+    mainHand.rotation(clockRotationForHour(hourBase))
     secondHand.rotation(seconds * 6)
 
     layer.batchDraw()
   }
 
-  setInterval(anim, 250)
+  anim()
+  clockInterval = setInterval(anim, 250)
 }
 
 initClock()
@@ -149,10 +222,10 @@ var segments = []
 var points = []
 class TimeGap {
   constructor (values = {}) {
-    this._title = values.title || 'Time segment ' + (segments.length + 1)
+    this._title = values.title === undefined ? 'Time segment ' + (segments.length + 1) : values.title
     // initialize before arc
     this._color = values.color || getRandomColor()
-    this._hour = ((values.hour || 1) + 24) % 24
+    this._hour = ((values.hour === undefined ? 1 : values.hour) + 24) % 24
 
     // ---------------------------------------------------
     // should be centered every time
@@ -160,22 +233,11 @@ class TimeGap {
       x: conf.with / 2,
       y: conf.height / 2
     }
-    // update non valid position
-    if (values.arc) {
-      values.arc.x = position.x
-      values.arc.y = position.y
-    }
-    if (values.outerBorder) {
-      values.outerBorder.x = position.x
-      values.outerBorder.y = position.y
-    }
-    if (values.sideBorder) {
-      values.sideBorder.x = position.x
-      values.sideBorder.y = position.y
-    }
-    if (values.dragPoint) {
-      values.dragPoint.x = position.x
-      values.dragPoint.y = position.y
+
+    const restoreShapeAttrs = function (shape) {
+      if (!shape) return undefined
+
+      return Object.assign({}, shape.attrs || shape, position)
     }
 
     // default values
@@ -219,13 +281,13 @@ class TimeGap {
       }
     }
     // ---------------------------------------------------
-    this.arc = new Konva.Arc(values.arc || defaultArch)
+    this.arc = new Konva.Arc(restoreShapeAttrs(values.arc) || defaultArch)
 
-    this.outerBorder = new Konva.Arc(values.outerBorder || defaultOuterBorder)
+    this.outerBorder = new Konva.Arc(restoreShapeAttrs(values.outerBorder) || defaultOuterBorder)
 
-    this.sideBorder = new Konva.Arc(values.sideBorder || defaultSideBorder)
+    this.sideBorder = new Konva.Arc(restoreShapeAttrs(values.sideBorder) || defaultSideBorder)
 
-    this.dragPoint = new Konva.Circle(values.dragPoint || defaultDragPoint)
+    this.dragPoint = new Konva.Circle(restoreShapeAttrs(values.dragPoint) || defaultDragPoint)
   }
 
   distance (p1, p2) {
@@ -407,7 +469,9 @@ class TimeGap {
 // ---------------------------------------------------
 
 chrome.storage.local.get(['segments'], function (items) {
-  items.segments.forEach(element => {
+  const storedSegments = Array.isArray(items.segments) ? items.segments : []
+
+  storedSegments.forEach(element => {
     var tg = new TimeGap(element)
     tg.init(saveState)
     tg.addToLayer(layer)
@@ -417,23 +481,81 @@ chrome.storage.local.get(['segments'], function (items) {
   segments.forEach(element => {
     element.addDragPoint(layer)
   })
+
+  if (typeof printSegments === 'function') {
+    printSegments()
+  }
 })
 
 layer.draw()
 
 let saveState = function (dontRedraw=false) {
   const segmentsData = segments.map(x => x.serialize())
-  if (segments.length == 0) {
-    return false
-  }
   // hacky, need to rethink
   if (!dontRedraw) {
     printSegments()
-
-  } 
+  }
 
   chrome.storage.local.set({ segments: segmentsData }, function () {
     console.log('SAVED')
   })
 }
 // saveState()
+
+let resizeTimer
+window.addEventListener('resize', function () {
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(function () {
+    const segmentsData = segments.map(x => x.serialize())
+
+    points.forEach(function (curr) {
+      curr.point.remove()
+      curr.title.remove()
+    })
+    points = []
+
+    segments.forEach(function (segment) {
+      segment.remove()
+    })
+    segments = []
+
+    conf.with = window.innerWidth
+    conf.height = window.innerHeight
+    stage.width(conf.with)
+    stage.height(conf.height)
+    background.width(conf.with)
+    background.height(conf.height)
+
+    initClock()
+
+    segmentsData.forEach(function (data) {
+      const tg = new TimeGap(data)
+      tg.init(saveState)
+      tg.addToLayer(layer)
+      segments.push(tg)
+    })
+    segments.forEach(function (segment) {
+      segment.addDragPoint(layer)
+    })
+
+    printSegments()
+    saveState(true)
+    layer.draw()
+  }, 120)
+})
+
+const exportChronodexDataUrl = function () {
+  return stage.toDataURL({
+    pixelRatio: 2,
+    mimeType: 'image/png'
+  })
+}
+
+const downloadChronodex = function () {
+  const link = document.createElement('a')
+  link.download = 'chronodex.png'
+  link.href = exportChronodexDataUrl()
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+}

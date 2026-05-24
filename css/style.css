@@ -3,13 +3,8 @@ html, body {
   padding: 0;
   overflow: hidden;
   height: 100%;
-
-  background-color: #f0f0f0;
-  /* animation: fadeIn 2s; */
-  /* visibility: visible;
-  opacity: 1;
-  transition: opacity 2s linear; */
-
+  background: #eef0ed;
+  color: #243241;
 }
 
 body {
@@ -30,59 +25,115 @@ body {
 }
 
 #openNavigation {
-  position: absolute;
-  top: 30px;
-  left: 50px;
-}
-  
-.picker-input {
-  padding: 0;
-  border: none;
-  background: none;
-  /* outline: none; */
+  position: fixed;
+  left: 0;
+  top: 50%;
+  z-index: 2;
+  transform: translateY(-50%);
 }
 
-input[type="color"] {
-/* margin: 2px; */
-margin-bottom: 4px;
-border: none;
-height: 46px;
-width: 46px;
-vertical-align: middle;
-display: inline-block;
-border-radius: 4px;
+#downloadChronodex {
+  position: fixed;
+  right: 28px;
+  top: 28px;
+  z-index: 2;
+}
+
+.settings-fab,
+.download-fab {
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(43, 60, 77, 0.16);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 8px 14px 34px rgba(26, 35, 45, 0.13);
+  color: #243241;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  transition: width 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.settings-fab {
+  width: 46px;
+  height: 64px;
+  border-left: 0;
+  border-radius: 0 16px 16px 0;
+}
+
+.download-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.download-fab svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.settings-fab:hover,
+.settings-fab:focus,
+.download-fab:hover,
+.download-fab:focus {
+  width: 54px;
+  background: #ffffff;
+  box-shadow: 10px 18px 42px rgba(26, 35, 45, 0.18);
+}
+
+.download-fab:hover,
+.download-fab:focus {
+  width: 48px;
+  transform: translateY(-2px);
+}
+
+.picker-input {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+}
+
+.picker-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.picker-input::-webkit-color-swatch {
+  border: 0;
+  border-radius: 4px;
 }
 
 .title-input {
-  margin: 2px;
-  border-radius: 2px;
-  border-style: solid;
-  width: 75%;
-  padding: 8px;
-  font-size: 16px;
+  width: 100%;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid #dde4e0;
   border-radius: 4px;
-  border-color: #f0f0f0;
-
-}
-.title-input:hover {
-  border-color: #2b3c4d;
-}
-
-.picker-input:hover {
-  cursor: pointer;
+  background: #f8faf9;
+  color: #243241;
+  font-size: 16px;
+  outline: none;
 }
 
-.picker-input:focus {
-  cursor: pointer;
+.title-input:hover,
+.title-input:focus {
+  border-color: #8fa59a;
+  background: #ffffff;
 }
 
-button {
-  /* background-color: #2b3c4d;  */
-  background-color: #008CBA;
+button:not(.settings-fab):not(.download-fab) {
+  background: #2b3c4d;
   border: none;
   color: white;
-  padding: 10px 20px;
-  margin: 2px;
+  padding: 10px 16px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
@@ -91,75 +142,214 @@ button {
   border-radius: 4px;
 }
 
-
-/* The Modal (background) */
 .modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1; /* Sit on top */
+  display: none;
+  position: fixed;
+  z-index: 8;
   left: 0;
   top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgb(0,0,0); /* Fallback color */
-  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-  -webkit-animation-name: fadeIn; /* Fade in the background */
-  -webkit-animation-duration: 0.4s;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: rgba(20, 28, 36, 0.34);
+  -webkit-animation-name: fadeIn;
+  -webkit-animation-duration: 0.24s;
   animation-name: fadeIn;
-  animation-duration: 0.4s
+  animation-duration: 0.24s;
 }
 
-/* Modal Content */
 .modal-content {
   position: fixed;
-  bottom: 0;
-  background-color: #fefefe;
-  width: 100%;
-  -webkit-animation-name: slideIn;
-  -webkit-animation-duration: 0.4s;
-  animation-name: slideIn;
-  animation-duration: 0.4s
-}
-
-/* The Close Button */
-.close {
-  color: white;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-  color: #000;
-  text-decoration: none;
-  cursor: pointer;
+  left: 0;
+  top: 0;
+  width: min(410px, calc(100% - 28px));
+  height: 100%;
+  overflow: hidden;
+  background: #ffffff;
+  border-right: 1px solid rgba(43, 60, 77, 0.12);
+  border-radius: 0 4px 4px 0;
+  box-shadow: 22px 0 72px rgba(25, 34, 43, 0.22);
+  -webkit-animation-name: slideInLeft;
+  -webkit-animation-duration: 0.28s;
+  animation-name: slideInLeft;
+  animation-duration: 0.28s;
 }
 
 .modal-header {
-  padding: 2px 16px;
-  background-color: #2b3c4d;
-  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 58px;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e8eee9;
+  background: #f8faf9;
+  color: #243241;
 }
 
-.modal-body {padding: 2px 16px;}
-
-.modal-footer {
-  padding: 20px 16px;
-  /* background-color: #5cb85c; */
-  color: white;
+.modal-title {
+  margin: 0;
+  color: #243241;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-/* Add Animation */
-@-webkit-keyframes slideIn {
-  from {bottom: -300px; opacity: 0} 
-  to {bottom: 0; opacity: 1}
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-@keyframes slideIn {
-  from {bottom: -300px; opacity: 0}
-  to {bottom: 0; opacity: 1}
+.add-button {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  padding: 0 14px;
+  background: #246b52;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.modal-body {
+  display: grid;
+  gap: 8px;
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+  padding: 14px 14px 28px;
+}
+
+.segment-row {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 36px;
+  align-items: start;
+  column-gap: 10px;
+  row-gap: 4px;
+  min-height: 76px;
+  padding: 10px;
+  border: 1px solid #e5ece7;
+  border-radius: 4px;
+  background: #fbfcfb;
+}
+
+.segment-row:hover {
+  border-color: #cfdcd4;
+  background: #ffffff;
+}
+
+.segment-row .picker-input {
+  grid-column: 1 / 2;
+  grid-row: 1 / 2;
+  width: 36px;
+  height: 36px;
+  box-shadow: inset 0 0 0 1px rgba(36, 50, 65, 0.14);
+}
+
+.segment-title-field {
+  display: grid;
+  grid-column: 2 / 3;
+  grid-row: 1 / 2;
+  min-width: 0;
+}
+
+.segment-row .title-input {
+  height: 36px;
+  padding: 0 10px;
+  border-color: #d8e2dc;
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(36, 50, 65, 0.03);
+}
+
+.segment-row .title-input:hover,
+.segment-row .title-input:focus {
+  border-color: #779586;
+  box-shadow: 0 0 0 3px rgba(119, 149, 134, 0.14);
+}
+
+.segment-duration {
+  grid-column: 2 / 3;
+  grid-row: 2 / 3;
+  min-width: 62px;
+  color: #66776d;
+  font-size: 13px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.remove-button {
+  position: relative;
+  display: block;
+  grid-column: 3 / 4;
+  grid-row: 1 / 2;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  overflow: hidden;
+  background: #f7ece9;
+  color: #8b2f22;
+}
+
+.remove-button::before {
+  content: "\00d7";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -53%);
+  font-size: 24px;
+  line-height: 1;
+  font-family: Arial, sans-serif;
+  font-weight: 400;
+}
+
+.remove-button:hover,
+.remove-button:focus {
+  background: #edd3cc;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  min-height: 120px;
+  border: 1px dashed #cbd8d1;
+  border-radius: 4px;
+  color: #6b7c72;
+  font-size: 15px;
+}
+
+@media (max-width: 640px) {
+  #openNavigation {
+    left: 0;
+    top: 50%;
+  }
+
+  #downloadChronodex {
+    right: 18px;
+    top: 18px;
+  }
+
+  .modal-content {
+    width: min(390px, calc(100% - 18px));
+    border-radius: 0 4px 4px 0;
+  }
+
+  .modal-header {
+    padding: 12px 18px;
+  }
+
+  .modal-body {
+    padding: 14px 18px 24px;
+  }
+}
+
+@-webkit-keyframes slideInLeft {
+  from {left: -80px; opacity: 0}
+  to {left: 0; opacity: 1}
+}
+
+@keyframes slideInLeft {
+  from {left: -80px; opacity: 0}
+  to {left: 0; opacity: 1}
 }
 
 @-webkit-keyframes fadeIn {
